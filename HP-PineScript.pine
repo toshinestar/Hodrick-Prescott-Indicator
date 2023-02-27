@@ -1,0 +1,87 @@
+//This indicator is an implamentation of Hodrick-Prescott (HP) filter
+// © vatche
+
+//@version=5
+indicator('Hodrick Prescott', overlay=true)
+
+////////////////INPUTS///////////////////
+color indicator_color1 = color.red
+color indicator_color2 = color.yellow
+indicator_width1 = 2
+indicator_width2 = 2
+
+Shift = input.int(defval=5, title='Shift',minval=1)
+Filter_1 = input.int(defval=999, title='Filter_1',minval=1)
+Filter_2 = input.int(defval=1599, title='Filter_2',minval=1)
+
+float src = input(close, 'Source')
+
+Hodrick_Prescott(filter1, filter2)=>
+    ///////////Construct Arrays///////////////
+    a = array.new_float(filter1, 0.0)
+    b = array.new_float(filter1, 0.0)
+    c = array.new_float(filter1, 0.0)
+
+    float variable1 = 0
+    float variable2 = 0
+    float variable3 = 0
+    float variable4 = 0
+    float variable5 = 0
+    float variable6 = 0
+    float variable7 = 0
+    float variable8 = 0
+    float variable9 = 0
+
+    HP = array.new_float(size = filter1, initial_value = 0.0) 
+    for i = 0 to filter1 - 1
+        array.set(HP, i, src[i])
+
+    array.set(a, 0, 1.0+filter2)
+    array.set(b, 0, -2.0*filter2)
+    array.set(c, 0, filter2)
+
+    for i = 1 to filter1-3
+        array.set(a, i, filter2 * 6 + 1)
+        array.set(b, i, filter2 * -4)
+        array.set(c, i, filter2)
+
+    array.set(a, 1, filter2 * 5.0 + 1.0)
+    array.set(a, filter1-1, filter2  + 1.0)
+    array.set(a, filter1-2, filter2 * 5.0  + 1.0)
+    array.set(b, filter1-2, filter2  * -2.0)
+    array.set(b, filter1-1, 0.0)
+    array.set(c, filter1-2, 0.0)
+    array.set(c, filter1-1, 0.0)
+
+    for i = 0 to filter1 - 1
+        variable12 = array.get(a, i) - variable4 * variable1 - variable9 * variable7
+        variable10 = array.get(b, i)
+        variable6 := variable1
+        variable1 := (variable10 - variable4 * variable2)/variable12
+        array.set(b,i, variable1)
+        variable11 = array.get(c, i)
+        variable7 := variable2
+        variable2 := variable11/variable12
+        array.set(c, i, variable2)
+        array.set(a, i, (array.get(HP, i) - variable8 * variable9 - variable3 * variable4)/variable12)
+        variable8 := variable3
+        variable3 := array.get(a, i)
+        variable4 := variable10 - variable5 * variable6
+        variable9 := variable5
+        variable5 := variable11
+
+    variable2 := 0
+    variable1 := array.get(a, filter1 -1)
+    array.set(HP,  filter1 -1, variable1)
+
+    for i = filter1 - 2 to 0
+        array.set(HP, i, array.get(a, i) - array.get(b, i) * variable1 - array.get(c, i) * variable2)
+        variable2 := variable1
+        variable1 := array.get(HP, i)
+    //////////////Construct the output///////////////////
+    HP
+
+HP1 = Hodrick_Prescott(Filter_1, Filter_2)
+
+plot(array.get(HP1, 0), color = indicator_color2, linewidth = indicator_width1)
+plot(array.get(HP1, 0), color = indicator_color1, linewidth = indicator_width1, offset = Shift)

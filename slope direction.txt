@@ -1,0 +1,16 @@
+//@version=5
+indicator(title="slope direction", overlay=true)
+period = input(32,"Period")
+off_set = math.sqrt(period) + period + 1
+// Input options
+averageData = input.source(close, title="Average Data Source")
+
+Length = input.int(9, title="Average Length")
+Offset = input.float(0.7, title="Average Offset", step=0.1)
+Sigma  = input.int(3, title="Average Sigma")
+
+// Calculate the ALMAs
+fastAverage = ta.alma(averageData, Length, Offset, Sigma)
+
+// Plot averages
+plot(fastAverage, color= ta.rising(fastAverage,1) ? color.red:color.blue, title="ALMA")
